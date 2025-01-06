@@ -104,7 +104,7 @@ int main() {
     UnloadImage(w_pawn);
 
     Vector2 square_pos = {(float)128, (float)128};
-    int prev = 1;       //to switch between light and dark square -> using it as a flag var
+    int prev = 1;       //to switch between light and dark square
     int piece_x;
     int piece_y;
 

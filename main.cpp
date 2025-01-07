@@ -9,13 +9,13 @@ const int SCREEN_HEIGHT = 1024;
 int main() {
     //chess board
     vector<vector<char>> board = {
-        {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'},
-        {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
+        {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},           //small case indicates dark coins
+        {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
+        {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},           //capital case indicates light coins
         {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
     };
 
@@ -104,7 +104,7 @@ int main() {
     UnloadImage(w_pawn);
 
     Vector2 square_pos = {(float)128, (float)128};
-    int prev = 1;       //to switch between light and dark square -> using it as a flag var
+    int prev = 1;       //if prev is 1, we print light square, else dark
     int piece_x;
     int piece_y;
 
@@ -138,54 +138,44 @@ int main() {
         //placing the pieces on the board
         for(int i=0; i<8; i++) {
             for(int j=0; j<8; j++) {
-                switch(board[i][j]) {
-                    case 'R':
-                        piece_x = i * 128 + 15;
-                        piece_y = j * 128 + 15;
-                        if(j < 2)
-                            DrawTexture(b_rook_texture, piece_x, piece_y, WHITE);      
-                        else
-                            DrawTexture(w_rook_texture, piece_x, piece_y, WHITE); 
+                piece_x = j*128 + 15;       //computing the coordinates of x for a coin
+                piece_y = i*128 + 15;       //computing the coordinates of y for a coin
+                switch(board[i][j]) { 
+                    case 'r':
+                        DrawTexture(b_rook_texture, piece_x, piece_y, WHITE);      
                         break;  
+                    case 'R':
+                        DrawTexture(w_rook_texture, piece_x, piece_y, WHITE);      
+                        break;
+                    case 'n':
+                        DrawTexture(b_knight_texture, piece_x, piece_y, WHITE);      
+                        break;
                     case 'N':
-                        piece_x = i * 128 + 15;
-                        piece_y = j * 128 + 15;
-                        if(i < 2)
-                            DrawTexture(b_knight_texture, piece_y, piece_x, WHITE);      
-                        else
-                            DrawTexture(w_knight_texture, piece_y, piece_x, WHITE); 
+                        DrawTexture(w_knight_texture, piece_x, piece_y, WHITE);      
+                        break;
+                    case 'b':
+                        DrawTexture(b_bishop_texture, piece_x, piece_y, WHITE);      
                         break;
                     case 'B':
-                        piece_x = i * 128 + 15;
-                        piece_y = j * 128 + 15;
-                        if(i < 2)
-                            DrawTexture(b_bishop_texture, piece_y, piece_x, WHITE);      
-                        else
-                            DrawTexture(w_bishop_texture, piece_y, piece_x, WHITE); 
+                        DrawTexture(w_bishop_texture, piece_x, piece_y, WHITE);      
+                        break;
+                    case 'q':
+                        DrawTexture(b_queen_texture, piece_x, piece_y, WHITE);      
                         break;
                     case 'Q':
-                        piece_x = i * 128 + 15;
-                        piece_y = j * 128 + 15;
-                        if(i < 2)
-                            DrawTexture(b_queen_texture, piece_y, piece_x, WHITE);      
-                        else
-                            DrawTexture(w_queen_texture, piece_y, piece_x, WHITE); 
+                        DrawTexture(w_queen_texture, piece_x, piece_y, WHITE);      
+                        break;
+                    case 'k':
+                        DrawTexture(b_king_texture, piece_x, piece_y, WHITE);      
                         break;
                     case 'K':
-                        piece_x = i * 128 + 15;
-                        piece_y = j * 128 + 15;
-                        if(i < 2)
-                            DrawTexture(b_king_texture, piece_y, piece_x, WHITE);      
-                        else
-                            DrawTexture(w_king_texture, piece_y, piece_x, WHITE); 
+                        DrawTexture(w_king_texture, piece_x, piece_y, WHITE);      
+                        break;
+                    case 'p':
+                        DrawTexture(b_pawn_texture, piece_x, piece_y, WHITE);      
                         break;
                     case 'P':
-                        piece_x = i * 129 + 15;
-                        piece_y = j * 128 + 15;
-                        if(i < 2)
-                            DrawTexture(b_pawn_texture, piece_y, piece_x, WHITE);      
-                        else
-                            DrawTexture(w_pawn_texture, piece_y, piece_x, WHITE); 
+                        DrawTexture(w_pawn_texture, piece_x, piece_y, WHITE);      
                         break;
                 };
             }

@@ -3,9 +3,21 @@
 
 using namespace std;
 
-const int SCREEN_WIDTH = 1024;
+const int SCREEN_WIDTH = 1024 + 128*3;
 const int SCREEN_HEIGHT = 1024;
-//test commit for developer branc "dev"
+const int ROWS = 8;
+const int COLS = 8;
+
+vector<pair<int, int>> showPossibleSquares(vector<vector<char>> &board, int x, int y){
+   vector<pair<int, int>> possible_squares;
+   if(board[x][y] == 'P'){
+      possible_squares.push_back(make_pair(y,x-1));
+      possible_squares.push_back(make_pair(y,x-2));
+   }
+   return possible_squares;
+}
+
+
 int main() {
     //chess board
     vector<vector<char>> board = {
@@ -19,16 +31,33 @@ int main() {
         {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
     };
 
+    int selected_piece_x = -1;
+    int selected_piece_y = -1;
+
+
+    bool light_turn = true;
+    bool dark_turn = false;
+
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Chess");
 
     //Dark Square
     Image dark_square = LoadImage(".\\assets\\pieces&board\\square brown dark_png_128px.png");
     Texture2D dark_square_texture = LoadTextureFromImage(dark_square);
+
+
+    // Dark canvas for right margin
+    ImageResize(&dark_square, 128*3, 128*4);
+    Texture2D dark_canvas = LoadTextureFromImage(dark_square);
     UnloadImage(dark_square);
+
 
     //LightSquare
     Image light_square = LoadImage(".\\assets\\pieces&board\\square brown light_png_128px.png");
     Texture2D light_square_texture = LoadTextureFromImage(light_square);
+
+    //Light canvas for right margin
+    ImageResize(&light_square, 128*3, 128*4);
+    Texture2D light_canvas = LoadTextureFromImage(light_square);
     UnloadImage(light_square);
 
     //black rook
@@ -110,30 +139,31 @@ int main() {
 
     // ToggleFullscreen();
 
+
+    RenderTexture2D boardTexture = LoadRenderTexture(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    // Pre-render board for efficiency
+    BeginTextureMode(boardTexture);
+    ClearBackground(WHITE);
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            if ((i + j) % 2 == 0) {
+                DrawTexture(light_square_texture, j * 128, i * 128, WHITE);
+            } else {
+                DrawTexture(dark_square_texture, j * 128, i * 128, WHITE);
+            }
+        }
+    }
+    EndTextureMode();
+
+    SetTargetFPS(10);
     while(!WindowShouldClose()) {
         ClearBackground(WHITE);
         
         BeginDrawing();
         
         //Generate the chess board
-        for(int i = 0; i < 8; i++) {
-            for(int j = 0; j < 8; j++) {
-                if(prev == 1) {
-                    DrawTexture(light_square_texture, (int)square_pos.x*j, (int)square_pos.y*i, WHITE);
-                    prev = 0;
-                }
-                else {
-                    DrawTexture(dark_square_texture, (int)square_pos.x*j, (int)square_pos.y*i, WHITE);
-                    prev = 1;
-                }
-            }
-            if(prev == 0) {
-                prev = 1;
-            }
-            else {
-                prev = 0;
-            }
-        }
+        DrawTexture(boardTexture.texture, 0, 0, WHITE);
 
         //placing the pieces on the board
         for(int i=0; i<8; i++) {
@@ -180,12 +210,46 @@ int main() {
                 };
             }
         }
-        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            int mouse_x = GetMouseX();
-            int mouse_y = GetMouseY();
-            cout << mouse_x / 128 << " " << mouse_y / 128 << "\n";
+
+        // Drawing dark canvas on right
+        DrawTexture(dark_canvas, 128*8, 0, WHITE);
+
+        // Drawing light canvas on right
+        DrawTexture(light_canvas, 128*8, 128*4, WHITE);
+
+        if(selected_piece_x != -1){                       // this means a piece is selected
+          vector<pair<int, int>> possible_squares = showPossibleSquares(board, selected_piece_y, selected_piece_x);
+          for(auto it: possible_squares){
+            DrawCircle(it.first*128 + (128/2), it.second*128 + (128/2), 15, GREEN);
+          }
         }
 
+        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+         
+            int mouse_x = GetMouseX()/128;
+            int mouse_y = GetMouseY()/128;
+
+            if(light_turn){
+               
+               if((int)board[mouse_y][mouse_x] > 65 && (int)board[mouse_y][mouse_x] < 90){
+                  
+                  selected_piece_x = mouse_x;               //findng the x, y of selected piece
+                  selected_piece_y = mouse_y;
+               }else{
+                  selected_piece_x = -1;
+                  selected_piece_y = -1;
+               }
+               
+            }else{
+               if(board[mouse_y][mouse_x] > 97 && board[mouse_y][mouse_x] < 122){
+                  selected_piece_x = mouse_x;
+                  selected_piece_y = mouse_y;
+               }else{
+                  selected_piece_x = -1;
+                  selected_piece_y = -1;
+               }
+            }
+        }
         EndDrawing();
     } 
     UnloadTexture(w_rook_texture);
@@ -203,3 +267,6 @@ int main() {
     CloseWindow(); 
     return 0;
 }
+
+
+

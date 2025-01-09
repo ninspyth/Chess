@@ -217,7 +217,7 @@ int main() {
         // Drawing light canvas on right
         DrawTexture(light_canvas, 128*8, 128*4, WHITE);
 
-        if(selected_piece_x != -1){
+        if(selected_piece_x != -1){                       // this means a piece is selected
           vector<pair<int, int>> possible_squares = showPossibleSquares(board, selected_piece_y, selected_piece_x);
           for(auto it: possible_squares){
             DrawCircle(it.first*128 + (128/2), it.second*128 + (128/2), 15, GREEN);
@@ -233,7 +233,7 @@ int main() {
                
                if((int)board[mouse_y][mouse_x] > 65 && (int)board[mouse_y][mouse_x] < 90){
                   
-                  selected_piece_x = mouse_x;
+                  selected_piece_x = mouse_x;               //findng the x, y of selected piece
                   selected_piece_y = mouse_y;
                }else{
                   selected_piece_x = -1;

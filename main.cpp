@@ -103,12 +103,12 @@ int main() {
 
     vector<vector<char>> board = {
         {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},           //small case indicates dark coins
-        {'p', 'p', 'p', 'p', 'p', 'P', 'p', 'p'},
+        {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {'P', 'P', 'P', 'P', 'P', 'p', 'P', 'P'},           //capital case indicates light coins
+        {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},           //capital case indicates light coins
         {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
     };
 

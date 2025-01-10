@@ -3,31 +3,112 @@
 
 using namespace std;
 
+typedef struct Vec2 {
+    int x;
+    int y;
+} Vec2;
+
 const int SCREEN_WIDTH = 1024 + 128*3;
 const int SCREEN_HEIGHT = 1024;
 const int ROWS = 8;
 const int COLS = 8;
 
-vector<pair<int, int>> showPossibleSquares(vector<vector<char>> &board, int x, int y){
-   vector<pair<int, int>> possible_squares;
-   if(board[x][y] == 'P'){
-      possible_squares.push_back(make_pair(y,x-1));
-      possible_squares.push_back(make_pair(y,x-2));
-   }
-   return possible_squares;
+bool in_range(int num, int num1, int low, int high) {
+    if(num <= high && num >= low && num1 >= low && num1 <= high) {
+        return true;
+    }
+    return false;
 }
 
+vector<pair<int, int>> showPossibleSquares(vector<vector<char>> &board, int x, int y, char piece){
+    vector<pair<int, int>> possible_squares, piece_moves;
+
+    if(piece == 'P'){
+        if(in_range(x-1, y, 0, 7) && board[x-1][y] == ' ') {
+            possible_squares.push_back({y,x-1});
+        }
+        if(x == 6 && board[x-2][y] == ' ') {
+            possible_squares.push_back({y,x-2});
+        }
+        if(in_range(x-1, y+1, 0, 7) && islower(board[x-1][y+1])) {
+            possible_squares.push_back({y+1, x-1});
+        }
+        if(in_range(x-1, y-1, 0, 7) && islower(board[x-1][y-1])) {
+            possible_squares.push_back({y-1, x-1});
+        }
+    }
+    else if(piece == 'p') {
+        if(in_range(x+1, y, 0, 7) && board[x+1][y] == ' ') {
+            possible_squares.push_back({y, x+1});
+        }
+        if(x== 1 && board[x+2][y] == ' ') {
+            possible_squares.push_back({y, x+2});
+        }
+        if(in_range(x+1, y-1, 0, 7) && isupper(board[x+1][y-1])) {
+            possible_squares.push_back({y-1, x+1});
+        }
+        if(in_range(x+1, y+1, 0, 7) && isupper(board[x+1][y+1])) {
+            possible_squares.push_back({y+1, x+1});
+        }
+    }
+
+    //Knight possible moves
+    else if(piece == 'N' || piece == 'n') {
+        piece_moves = {{y-1, x+2}, {y+1, x-2}, {y-2, x+1}, {y+2, x+1}, {y-2, x-1}, {y-1, x-2}, {y+2, x-1}, {y+1, x+2}};
+        
+        if(piece == 'N') {
+            for(const pair<int, int> &moves: piece_moves) {
+                //check for out of bounds and if the to pos is empty or enemy piece then move
+                if(moves.first >=0 && moves.first <=7 && moves.second >=0 && moves.second <= 7 && (board[moves.second][moves.first] == ' ' || islower(board[moves.second][moves.first]))) {
+                    printf("first = %d, second = %d\n", moves.first, moves.second);
+                    possible_squares.push_back(moves);
+                }
+            }
+        }
+        else {
+            for(const pair<int, int> &moves: piece_moves) {
+                //check for out of bounds and if the to pos is empty or enemy piece then move
+                if(in_range(moves.first, moves.second, 0, 7) && (board[moves.second][moves.first] == ' ' || isupper(board[moves.second][moves.first]))) {
+                    possible_squares.push_back(moves);
+                }
+            }
+        }
+    } 
+
+    return possible_squares;
+}
+
+bool move_piece_from_to(vector<vector<char>> &board, vector<pair<int, int>> move_piece_pos) {
+    //initialize from pos and to pos
+    Vec2 from, to;
+    from.x = move_piece_pos[0].first, from.y = move_piece_pos[0].second;
+    to.x = move_piece_pos[1].first, to.y = move_piece_pos[1].second;
+    vector<pair<int, int>> possible_moves = showPossibleSquares(board, from.y, from.x, board[from.y][from.x]);  
+
+    //move logic for all pieces
+    for(pair<int, int> moves: possible_moves) {
+        if(moves.first == to.x && moves.second == to.y) {
+            board[to.y][to.x] = board[from.y][from.x];
+            board[from.y][from.x] = ' ';
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Checkmate = false;
 
 int main() {
     //chess board
+
     vector<vector<char>> board = {
         {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'},           //small case indicates dark coins
-        {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
+        {'p', 'p', 'p', 'p', 'p', 'P', 'p', 'p'},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
         {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '},
-        {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},           //capital case indicates light coins
+        {'P', 'P', 'P', 'P', 'P', 'p', 'P', 'P'},           //capital case indicates light coins
         {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'}
     };
 
@@ -39,26 +120,6 @@ int main() {
     bool dark_turn = false;
 
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Chess");
-
-    //Dark Square
-    Image dark_square = LoadImage(".\\assets\\pieces&board\\square brown dark_png_128px.png");
-    Texture2D dark_square_texture = LoadTextureFromImage(dark_square);
-
-
-    // Dark canvas for right margin
-    ImageResize(&dark_square, 128*3, 128*4);
-    Texture2D dark_canvas = LoadTextureFromImage(dark_square);
-    UnloadImage(dark_square);
-
-
-    //LightSquare
-    Image light_square = LoadImage(".\\assets\\pieces&board\\square brown light_png_128px.png");
-    Texture2D light_square_texture = LoadTextureFromImage(light_square);
-
-    //Light canvas for right margin
-    ImageResize(&light_square, 128*3, 128*4);
-    Texture2D light_canvas = LoadTextureFromImage(light_square);
-    UnloadImage(light_square);
 
     //black rook
     Image b_rook = LoadImage(".\\assets\\pieces&board\\b_rook_png_128px.png");
@@ -136,9 +197,11 @@ int main() {
     int prev = 1;       //if prev is 1, we print light square, else dark
     int piece_x;
     int piece_y;
+    bool isMoved = false;
 
     // ToggleFullscreen();
 
+    vector<pair<int, int>> move_piece_pos(2, {-1, -1});
 
     RenderTexture2D boardTexture = LoadRenderTexture(SCREEN_WIDTH, SCREEN_HEIGHT);
 
@@ -148,9 +211,9 @@ int main() {
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
             if ((i + j) % 2 == 0) {
-                DrawTexture(light_square_texture, j * 128, i * 128, WHITE);
+                DrawRectangle(j * 128, i * 128, 128, 128, LIGHTGRAY); 
             } else {
-                DrawTexture(dark_square_texture, j * 128, i * 128, WHITE);
+                DrawRectangle(j * 128, i * 128, 128, 128, DARKGRAY);
             }
         }
     }
@@ -211,43 +274,84 @@ int main() {
             }
         }
 
-        // Drawing dark canvas on right
-        DrawTexture(dark_canvas, 128*8, 0, WHITE);
+        // // Drawing dark canvas on right
+        // DrawTexture(dark_canvas, 128*8, 0, WHITE);
 
-        // Drawing light canvas on right
-        DrawTexture(light_canvas, 128*8, 128*4, WHITE);
+        // // Drawing light canvas on right
+        // DrawTexture(light_canvas, 128*8, 128*4, WHITE);
+
+        if(Checkmate) {
+           //End Game 
+        }
 
         if(selected_piece_x != -1){                       // this means a piece is selected
-          vector<pair<int, int>> possible_squares = showPossibleSquares(board, selected_piece_y, selected_piece_x);
+          vector<pair<int, int>> possible_squares = showPossibleSquares(board, selected_piece_y, selected_piece_x, board[selected_piece_y][selected_piece_x]);
           for(auto it: possible_squares){
             DrawCircle(it.first*128 + (128/2), it.second*128 + (128/2), 15, GREEN);
           }
         }
 
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-         
             int mouse_x = GetMouseX()/128;
             int mouse_y = GetMouseY()/128;
 
-            if(light_turn){
-               
-               if((int)board[mouse_y][mouse_x] > 65 && (int)board[mouse_y][mouse_x] < 90){
-                  
-                  selected_piece_x = mouse_x;               //findng the x, y of selected piece
-                  selected_piece_y = mouse_y;
-               }else{
-                  selected_piece_x = -1;
-                  selected_piece_y = -1;
-               }
-               
-            }else{
-               if(board[mouse_y][mouse_x] > 97 && board[mouse_y][mouse_x] < 122){
-                  selected_piece_x = mouse_x;
-                  selected_piece_y = mouse_y;
-               }else{
-                  selected_piece_x = -1;
-                  selected_piece_y = -1;
-               }
+            cout << mouse_x << " " << mouse_y << endl;
+
+            if(light_turn && mouse_x <=7 && mouse_y <= 7){
+                if(isupper(board[mouse_y][mouse_x])){
+                    if(selected_piece_x == -1 && selected_piece_y == -1 || (mouse_x != selected_piece_x || mouse_y != selected_piece_y)) {
+                        cout << "hello" << "\n";
+                        move_piece_pos[0] = {mouse_x, mouse_y};
+                    }
+                    selected_piece_x = mouse_x;               //findng the x, y of selected piece
+                    selected_piece_y = mouse_y;
+                    // printf("from.x = %d, from.y = %d\n", move_piece_pos[0].first, move_piece_pos[0].second);
+                    // printf("piece_x = %d, piece_y = %d\n", selected_piece_x, selected_piece_y);
+                }
+                else{
+                    if(selected_piece_x == -1 && islower(board[mouse_y][mouse_x])) {
+                        cout << "Invalid piece" << endl;
+                    }
+                    else {
+                        cout << "move logic" << "\n";
+                        move_piece_pos[1] = {mouse_x, mouse_y};
+                        isMoved = move_piece_from_to(board, move_piece_pos);
+                        if(isMoved) {
+                            move_piece_pos = {{-1, -1}, {-1, -1}};
+                            light_turn = false;
+                            dark_turn = true;
+                        }
+                    }
+                    selected_piece_x = -1;
+                    selected_piece_y = -1;
+                }  
+            }
+            else if(dark_turn && mouse_x <=7 && mouse_y <= 7) {
+                if(islower(board[mouse_y][mouse_x])) {
+                    if(selected_piece_x == -1 && selected_piece_y == -1 || (mouse_x != selected_piece_x || mouse_y != selected_piece_y)) {
+                        cout << "hello" << "\n";
+                        move_piece_pos[0] = {mouse_x, mouse_y};
+                    }
+                    selected_piece_x = mouse_x;
+                    selected_piece_y = mouse_y;
+                }
+                else{
+                    if(selected_piece_x == -1 && isupper(board[mouse_y][mouse_x])) {
+                        cout << "Invalid Piece" << endl;
+                    }
+                    else {
+                        // cout << "move logic" << "\n";
+                        move_piece_pos[1] = {mouse_x, mouse_y};
+                        isMoved = move_piece_from_to(board, move_piece_pos);
+                        if(isMoved) {
+                            move_piece_pos = {{-1, -1}, {-1, -1}};
+                            light_turn = true;
+                            dark_turn = false;
+                        }
+                    }
+                    selected_piece_x = -1;
+                    selected_piece_y = -1;
+                }
             }
         }
         EndDrawing();

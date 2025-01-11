@@ -20,6 +20,73 @@ bool in_range(int num, int num1, int low, int high) {
     return false;
 }
 
+bool same_case(char a, char b) {
+     if((isupper(a) && isupper(b)) || (islower(a) && islower(b))) {
+        return true;
+     }
+     return false;
+}
+
+void show_diagonal_moves(vector<vector<char>> &board, int x, int y, vector<pair<int, int>> &possible_squares, char piece) {
+    int level = 1, piece_x = x, piece_y = y;
+        bool q1 = true, q2 = true, q3 = true, q4 = true;
+        while(level <= 7) {
+            // - -
+            if(q1 && in_range(piece_x - level, piece_y - level, 0, 7)) {
+                if(board[piece_x - level][piece_y - level] == ' ') {
+                    possible_squares.push_back({piece_y - level, piece_x - level});
+                }
+                else if(!same_case(board[piece_x - level][piece_y - level], piece)) {
+                    possible_squares.push_back({piece_y - level, piece_x - level});
+                    q1 = false;
+                }
+                else {
+                    q1 = false;
+                }
+            }
+            // - +
+            if(q2 && in_range(piece_x - level, piece_y + level, 0, 7)) {
+                if(board[piece_x - level][piece_y + level] == ' ') {
+                    possible_squares.push_back({piece_y + level, piece_x - level});
+                }
+                else if(!same_case(board[piece_x - level][piece_y + level], piece)) {
+                    possible_squares.push_back({piece_y + level, piece_x - level});
+                    q2 = false;
+                }
+                else {
+                    q2 = false;
+                }
+            }
+            // + +
+            if(q3 && in_range(piece_x + level, piece_y + level, 0, 7)) {
+                if(board[piece_x + level][piece_y + level] == ' ') {
+                    possible_squares.push_back({piece_y + level, piece_x + level});
+                }
+                else if(!same_case(board[piece_x + level][piece_y + level], piece)) {
+                    possible_squares.push_back({piece_y + level, piece_x + level});
+                    q3 = false;
+                }
+                else {
+                    q3 = false;
+                }
+            }
+            // + -
+            if(q4 && in_range(piece_x + level, piece_y - level, 0, 7)) {
+                if(board[piece_x + level][piece_y - level] == ' ') {
+                    possible_squares.push_back({piece_y - level, piece_x + level});
+                }
+                else if(!same_case(board[piece_x + level][piece_y - level], piece)) {
+                    possible_squares.push_back({piece_y - level, piece_x + level});
+                    q4 = false;
+                }
+                else {
+                    q4 = false;
+                }
+            }
+            level++;
+        }
+}
+
 vector<pair<int, int>> showPossibleSquares(vector<vector<char>> &board, int x, int y, char piece){
     vector<pair<int, int>> possible_squares, piece_moves;
 
@@ -74,6 +141,27 @@ vector<pair<int, int>> showPossibleSquares(vector<vector<char>> &board, int x, i
             }
         }
     } 
+
+    //bishop possible moves
+    else if(piece == 'B' || piece == 'b') {
+        show_diagonal_moves(board, x, y, possible_squares, piece);
+    }
+
+    //king
+    else if(piece == 'K' || piece == 'k') {
+        vector<pair<int, int>> king_moves {{}, {}, {}, {}, {}, {}, {}, {}, {}};        
+    }
+
+    //queen
+    else if(piece == 'Q' || piece == 'q') {
+        show_diagonal_moves(board, x, y, possible_squares, piece);
+        // show_moves_along_axes(board, x, y, possible_squares, piece); need to implement
+    }
+
+    //rook
+    else if(piece == 'R' || piece == 'r') {
+
+    }
 
     return possible_squares;
 }

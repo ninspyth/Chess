@@ -27,64 +27,120 @@ bool same_case(char a, char b) {
      return false;
 }
 
-void show_diagonal_moves(vector<vector<char>> &board, int x, int y, vector<pair<int, int>> &possible_squares, char piece) {
+void show_diagonal_moves(vector<vector<char>> &board, int x, int y, vector<pair<int, int>> &possible_squares, char piece, int max_level) {
     int level = 1, piece_x = x, piece_y = y;
-        bool q1 = true, q2 = true, q3 = true, q4 = true;
-        while(level <= 7) {
-            // - -
-            if(q1 && in_range(piece_x - level, piece_y - level, 0, 7)) {
-                if(board[piece_x - level][piece_y - level] == ' ') {
-                    possible_squares.push_back({piece_y - level, piece_x - level});
-                }
-                else if(!same_case(board[piece_x - level][piece_y - level], piece)) {
-                    possible_squares.push_back({piece_y - level, piece_x - level});
-                    q1 = false;
-                }
-                else {
-                    q1 = false;
-                }
+    bool q1 = true, q2 = true, q3 = true, q4 = true;
+    while(level <= max_level) {
+        // - -
+        if(q1 && in_range(piece_x - level, piece_y - level, 0, 7)) {
+            if(board[piece_x - level][piece_y - level] == ' ') {
+                possible_squares.push_back({piece_y - level, piece_x - level});
             }
-            // - +
-            if(q2 && in_range(piece_x - level, piece_y + level, 0, 7)) {
-                if(board[piece_x - level][piece_y + level] == ' ') {
-                    possible_squares.push_back({piece_y + level, piece_x - level});
-                }
-                else if(!same_case(board[piece_x - level][piece_y + level], piece)) {
-                    possible_squares.push_back({piece_y + level, piece_x - level});
-                    q2 = false;
-                }
-                else {
-                    q2 = false;
-                }
+            else if(!same_case(board[piece_x - level][piece_y - level], piece)) {
+                possible_squares.push_back({piece_y - level, piece_x - level});
+                q1 = false;
             }
-            // + +
-            if(q3 && in_range(piece_x + level, piece_y + level, 0, 7)) {
-                if(board[piece_x + level][piece_y + level] == ' ') {
-                    possible_squares.push_back({piece_y + level, piece_x + level});
-                }
-                else if(!same_case(board[piece_x + level][piece_y + level], piece)) {
-                    possible_squares.push_back({piece_y + level, piece_x + level});
-                    q3 = false;
-                }
-                else {
-                    q3 = false;
-                }
+            else {
+                q1 = false;
             }
-            // + -
-            if(q4 && in_range(piece_x + level, piece_y - level, 0, 7)) {
-                if(board[piece_x + level][piece_y - level] == ' ') {
-                    possible_squares.push_back({piece_y - level, piece_x + level});
-                }
-                else if(!same_case(board[piece_x + level][piece_y - level], piece)) {
-                    possible_squares.push_back({piece_y - level, piece_x + level});
-                    q4 = false;
-                }
-                else {
-                    q4 = false;
-                }
-            }
-            level++;
         }
+        // - +
+        if(q2 && in_range(piece_x - level, piece_y + level, 0, 7)) {
+            if(board[piece_x - level][piece_y + level] == ' ') {
+                possible_squares.push_back({piece_y + level, piece_x - level});
+            }
+            else if(!same_case(board[piece_x - level][piece_y + level], piece)) {
+                possible_squares.push_back({piece_y + level, piece_x - level});
+                q2 = false;
+            }
+            else {
+                q2 = false;
+            }
+        }
+        // + +
+        if(q3 && in_range(piece_x + level, piece_y + level, 0, 7)) {
+            if(board[piece_x + level][piece_y + level] == ' ') {
+                possible_squares.push_back({piece_y + level, piece_x + level});
+            }
+            else if(!same_case(board[piece_x + level][piece_y + level], piece)) {
+                possible_squares.push_back({piece_y + level, piece_x + level});
+                q3 = false;
+            }
+            else {
+                q3 = false;
+            }
+        }
+        // + -
+        if(q4 && in_range(piece_x + level, piece_y - level, 0, 7)) {
+            if(board[piece_x + level][piece_y - level] == ' ') {
+                possible_squares.push_back({piece_y - level, piece_x + level});
+            }
+            else if(!same_case(board[piece_x + level][piece_y - level], piece)) {
+                possible_squares.push_back({piece_y - level, piece_x + level});
+                q4 = false;
+            }
+            else {
+                q4 = false;
+            }
+        }
+        level++;
+    }
+}
+
+void show_moves_along_axes(vector<vector<char>> &board, int x, int y, vector<pair<int, int>> &possible_squares, char piece, int max_level) {
+    int level = 1;
+    bool q1 = true, q2 = true, q3 = true, q4 = true;
+    while(level <= max_level) {
+        if(q1 && in_range(x - level, y, 0, 7)) {
+            if(board[x - level][y] == ' ') {
+                possible_squares.push_back({y, x - level});
+            }
+            else if(!same_case(board[x - level][y], piece)) {
+                possible_squares.push_back({y, x - level});
+                q1 = false;
+            }
+            else {
+                q1 = false;
+            }
+        }
+        if(q2 && in_range(x + level, y, 0, 7)) {
+            if(board[x + level][y] == ' ') {
+                possible_squares.push_back({y, x + level});
+            }
+            else if(!same_case(board[x + level][y], piece)) {
+                possible_squares.push_back({y, x + level});
+                q2 = false;
+            }
+            else {
+                q2 = false;
+            }
+        }
+        if(q3 && in_range(x, y - level, 0, 7)) {
+           if(board[x][y - level] == ' ') {
+                possible_squares.push_back({y - level, x});
+            }
+            else if(!same_case(board[x][y - level], piece)) {
+                possible_squares.push_back({y - level, x});
+                q3 = false;
+            } 
+            else {
+                q3 = false;
+            }
+        }
+        if(q4 && in_range(x, y + level, 0, 7)) {
+           if(board[x][y + level] == ' ') {
+                possible_squares.push_back({y + level, x});
+            }
+            else if(!same_case(board[x][y + level], piece)) {
+                possible_squares.push_back({y + level, x});
+                q4 = false;
+            } 
+            else {
+                q4 = false;
+            }
+        }
+        level++;
+    }   
 }
 
 vector<pair<int, int>> showPossibleSquares(vector<vector<char>> &board, int x, int y, char piece){
@@ -144,23 +200,24 @@ vector<pair<int, int>> showPossibleSquares(vector<vector<char>> &board, int x, i
 
     //bishop possible moves
     else if(piece == 'B' || piece == 'b') {
-        show_diagonal_moves(board, x, y, possible_squares, piece);
+        show_diagonal_moves(board, x, y, possible_squares, piece, 7);
     }
 
     //king
     else if(piece == 'K' || piece == 'k') {
-        vector<pair<int, int>> king_moves {{}, {}, {}, {}, {}, {}, {}, {}, {}};        
+        show_moves_along_axes(board, x, y, possible_squares, piece, 1);
+        show_diagonal_moves(board, x, y, possible_squares, piece, 1);
     }
 
     //queen
     else if(piece == 'Q' || piece == 'q') {
-        show_diagonal_moves(board, x, y, possible_squares, piece);
-        // show_moves_along_axes(board, x, y, possible_squares, piece); need to implement
+        show_diagonal_moves(board, x, y, possible_squares, piece, 7);
+        show_moves_along_axes(board, x, y, possible_squares, piece, 7);
     }
 
     //rook
     else if(piece == 'R' || piece == 'r') {
-
+        show_moves_along_axes(board, x, y, possible_squares, piece, 7);
     }
 
     return possible_squares;
@@ -399,6 +456,9 @@ int main() {
                 else{
                     if(selected_piece_x == -1 && islower(board[mouse_y][mouse_x])) {
                         cout << "Invalid piece" << endl;
+                    }
+                    else if(selected_piece_x == -1 && board[mouse_y][mouse_x] == ' ') {
+                        cout << "select a piece" << endl;
                     }
                     else {
                         cout << "move logic" << "\n";

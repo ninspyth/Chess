@@ -7,9 +7,20 @@
 // 3. Add en-passant
 // 4. Add logic for check and checkmate
 
+//----------- Update for TODO(4) ---------------
+// Able to check if white won through checkmate(Should add pawn and king checking also (see the show_king_check_moves function))
+
+// Check mate logic
+// ----------------------------------
+// When a player moves a piece check if the opponent's king is in check after the current move.
+// If the opponent's king is in check then check for all the possible square that the king can move to.
+// For all the possbile moves of the king check if the king can go that square without being in check after the move.
+// After checking for all the possible moves if there are no moves where the king can go to without being in check then assign true to checkmate and the game is over.
+// If there are squares where the king can go to without being in check add them to the possible square and ensure that the opponent can only move pieces that allow to remove the check. (Important) 
+
 
 // ---------- Issues -----------
-// 1. Check logic and Checkmate logic are not working
+// 1. Game crashing when king is selected after checkmate 
 
 using namespace std;
 
@@ -17,8 +28,15 @@ const int SCREEN_WIDTH = 1024 + 128*3;
 const int SCREEN_HEIGHT = 1024;
 const int ROWS = 8;
 const int COLS = 8;
+
 bool no_moves_for_king = false;
+bool Checkmate = false;
 bool Check = false;
+
+//to store possible moves for the selected piece
+vector<pair<int, int>> possible_squares;
+
+vector<pair<int, int>> showPossibleSquares(vector<vector<char>> &board, int x, int y, char piece);
 
 typedef struct Vec2 {
     int x;
@@ -58,6 +76,17 @@ bool is_opponent_king_check(vector<vector<char>> &board, vector<pair<int, int>> 
     return false;
 }
 
+pair<int, int> find_ch(char c, vector<vector<char>> &board) {
+    for(int i=0; i<8; i++) {
+        for(int j=0; j<8; j++) {
+            if(board[j][i] == c) {
+                return {j, i};
+            }
+        }
+    }
+    return {-1, -1};
+}
+
 class Piece {
     public:
         //piece moves
@@ -71,6 +100,9 @@ class Piece {
 
         //to show rest possible moves
         virtual int show_rest_possible_moves(vector<vector<char>> &board, int x, int y, vector<pair<int, int>> &possible_squares, char piece)= 0; 
+
+        //to show king moves
+        virtual int show_king_check_moves(vector<vector<char>> &board, int x, int y, vector<pair<int, int>> &possible_squares, char piece) = 0;
 
         //destructor
         virtual ~Piece() = default;
@@ -104,6 +136,10 @@ class Knight: public Piece {
             }
 
             return possible_squares.size();
+        }
+
+        int show_king_check_moves(vector<vector<char>> &board, int x, int y, vector<pair<int, int>> &possible_squares, char piece) override {
+            // No-op Implementatiton
         }
 };
 
@@ -142,6 +178,60 @@ class Pawn: public Piece {
             }
 
             return possible_squares.size();
+        }
+        int show_king_check_moves(vector<vector<char>> &board, int x, int y, vector<pair<int, int>> &possible_squares, char piece) override {
+            // No-op Implementation
+        }
+};
+
+class King: public Piece {
+    public:
+        //king moves
+        int no_of_king_moves = 0;
+
+        int show_rest_possible_moves(vector<vector<char>> &board, int x, int y, vector<pair<int, int>> &possible_squares, char piece) override {
+            // No-op Implementation
+        }
+
+        int show_king_check_moves(vector<vector<char>> &board, int x, int y, vector<pair<int, int>> &possible_squares, char piece) override {
+            string pieces;
+            vector<pair<int, int>> opponent_moves = {};
+
+            cout << "piece to check for: " << piece << endl;
+
+            //if the upper(white) king is in check then we have to check the possible piece of the light(white) pieces.
+            if(isupper(piece)) {
+                pieces = "rbnq"; 
+            }
+            else {
+                pieces = "RBNQ";
+            }
+            cout << pieces << endl; 
+
+            vector<pair<int, int>> king_moves = {{y, x-1}, {y+1, x}, {y-1, x}, {y, x+1}, {y-1, x-1}, {y-1, x+1}, {y+1, x-1}, {y+1, x+1}};
+            for(const pair<int, int> moves: king_moves) {
+                if(in_range(moves.first, moves.second, 0, 7) && (!same_case(board[moves.second][moves.first], piece) || board[moves.second][moves.first] == ' ')) {
+
+                    //check if the to move square is in the opponents pieces possible moves if yes then the king can't move the square
+                    for(char p: pieces) {
+                        //find where the piece is in the board to find the possible moves for that piece from that square
+                        pair<int, int> piece_pos = find_ch(p, board);
+                        if(piece_pos.first == -1) {
+                            continue;
+                        }
+                        //to check if the possible moves collide with the any of the possible moves by the opponents piece 
+                        opponent_moves = showPossibleSquares(board, piece_pos.second, piece_pos.first, p);
+
+                        for(const pair<int, int> &moves: opponent_moves) {
+                            if(moves.first != x || moves.second != y) {
+                                possible_squares.push_back({y, x});
+                                no_moves_for_king = true;
+                            }
+                        }
+                    }
+                } 
+            }
+            return no_of_king_moves == 0;
         }
 };
 
@@ -268,8 +358,7 @@ vector<pair<int, int>> showPossibleSquares(vector<vector<char>> &board, int x, i
 
     Knight k;
     Pawn p;
-
-    vector<pair<int, int>> possible_squares;
+    King king;
 
     int no_of_moves = 0;
 
@@ -290,15 +379,12 @@ vector<pair<int, int>> showPossibleSquares(vector<vector<char>> &board, int x, i
 
     //king moves
     else if(piece == 'K' || piece == 'k') {
-        no_of_moves += k.show_moves_along_axes(board, x, y, possible_squares, piece, 1);
-        no_of_moves += k.show_diagonal_moves(board, x, y, possible_squares, piece, 1);
-
-        //Checking for checkmate
-        if(no_of_moves == 0) {
-            no_moves_for_king = true;
+        if(!Check) {
+            no_of_moves += k.show_moves_along_axes(board, x, y, possible_squares, piece, 1);
+            no_of_moves += k.show_diagonal_moves(board, x, y, possible_squares, piece, 1);
         }
         else {
-            no_moves_for_king = false;
+            no_of_moves += king.show_king_check_moves(board, x, y, possible_squares, piece);
         }
     }
 
@@ -317,6 +403,7 @@ vector<pair<int, int>> showPossibleSquares(vector<vector<char>> &board, int x, i
 }
 
 bool move_piece_from_to(vector<vector<char>> &board, vector<pair<int, int>> move_piece_pos) {
+
     //initialize from pos and to pos
     Vec2 from, to;
     from.x = move_piece_pos[0].first, from.y = move_piece_pos[0].second;
@@ -328,8 +415,6 @@ bool move_piece_from_to(vector<vector<char>> &board, vector<pair<int, int>> move
         if(moves.first == to.x && moves.second == to.y) {
             board[to.y][to.x] = board[from.y][from.x];
             board[from.y][from.x] = ' ';
-
-            
             return true;
         }
     }
@@ -437,6 +522,8 @@ int main() {
     int piece_x;
     int piece_y;
     bool isMoved = false;
+    King king;
+    bool light_won = false;
 
     // ToggleFullscreen();
 
@@ -520,15 +607,32 @@ int main() {
         // // Drawing light canvas on right
         // DrawTexture(light_canvas, 128*8, 128*4, WHITE);
 
+        if(Checkmate) {
+            //win condition
+            if(light_won) {
+                //white won
+
+            }
+            else {
+                //black won
+
+            }
+        }
+
 
         if(selected_piece_x != -1){                       // this means a piece is selected
-          vector<pair<int, int>> possible_squares = showPossibleSquares(board, selected_piece_y, selected_piece_x, board[selected_piece_y][selected_piece_x]);
-          for(auto it: possible_squares){
-            DrawCircle(it.first*128 + (128/2), it.second*128 + (128/2), 15, BLACK);
-          }
+            possible_squares = showPossibleSquares(board, selected_piece_y, selected_piece_x, board[selected_piece_y][selected_piece_x]);
+            for(auto it: possible_squares){
+                DrawCircle(it.first*128 + (128/2), it.second*128 + (128/2), 15, GREEN);
+            }
         }
 
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+
+            //clearing the possible moves and possible squares
+            possible_moves = {};
+            possible_squares = {};
+
             int mouse_x = GetMouseX()/128;
             int mouse_y = GetMouseY()/128;
 
@@ -556,7 +660,6 @@ int main() {
                         cout << "select a piece" << endl;
                     }
                     else {
-                        cout << "move logic" << "\n";
                         move_piece_pos[1] = {mouse_x, mouse_y};
                         isMoved = move_piece_from_to(board, move_piece_pos);
                         if(isMoved) {
@@ -565,7 +668,20 @@ int main() {
                             possible_moves = showPossibleSquares(board, mouse_y, mouse_x, board[mouse_y][mouse_x]);
                             Check = is_opponent_king_check(board, possible_moves, board[mouse_y][mouse_x]);
 
+                            //position of the opponent king
+                            pair<int, int> king_pos = find_ch('k', board);
+                            if(Check)
+                                no_moves_for_king = king.show_king_check_moves(board, king_pos.first, king_pos.second, possible_squares, 'k');
+
+                            if(no_moves_for_king == false) {
+                                Checkmate = true;
+                            }
+
+                            cout <<  "Check = " << Check << endl;
+                            cout << "no_moves_for_king = " << no_moves_for_king << endl;
+
                             if(Check && no_moves_for_king) {
+                                Checkmate = true;
                                 cout << "White Won!!" << endl;
                             }
 
@@ -603,11 +719,17 @@ int main() {
                         if(isMoved) {
 
                             //Checking if the opponent king is in check
-                            possible_moves = showPossibleSquares(board, mouse_x, mouse_y, board[mouse_y][mouse_x]);
+                            possible_moves = showPossibleSquares(board, mouse_y, mouse_x, board[mouse_y][mouse_x]);
                             Check = is_opponent_king_check(board, possible_moves, board[mouse_y][mouse_x]);
 
-                            if(Check && no_moves_for_king) {
-                                cout << "White Won!!" << endl;
+                            //position of the opponent king
+                            pair<int, int> king_pos = find_ch('K', board);
+                            if(Check)
+                                no_moves_for_king = king.show_king_check_moves(board, king_pos.first, king_pos.second, possible_squares, 'K');
+
+                            if(Check && no_moves_for_king == 0) {
+                                Checkmate = true;
+                                cout << "Black Won!!" << endl;
                             }
 
                             move_piece_pos = {{-1, -1}, {-1, -1}};
